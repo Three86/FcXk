@@ -1,32 +1,35 @@
-# React + TypeScript + Vite
+# backpack.tf Live Listings
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Vite + Tailwind + shadcn/ui page that streams TF2 listings from the
+backpack.tf websocket (`wss://ws.backpack.tf/events`) and stores them in IndexedDB (Dexie).
 
-Currently, two official plugins are available:
+- **Sell orders on the left, buy orders on the right.**
+- **Filters:** name search, item type, sub-category (depends on type: weapon slot,
+  cosmetic/taunt class, tool kind, crate/case), quality, price range (keys + ref),
+  status (active / sold-removed / all) and sort.
+- **Steam image** from the payload's `item.imageUrl`, requested at 184x184 and capped at
+  184px, with a border in the item's quality colour (`item.quality.color`).
+- **Deletes are never removed from the DB.** A `listing-delete` marks the listing
+  `removed` (sold/removed); every listing keeps a price history (listed, price change,
+  removed, relisted). The History dialog also shows every recorded listing of the same
+  item (name + quality).
+- **Prices** shown as `x keys, x refined`, or just `x refined` when there are no keys.
+  The key → ref rate used for range filters/sorting is derived from the feed
+  (`value.raw`) and can be overridden in the header.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Run
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+If the browser can't connect to backpack.tf directly, run the Node relay and point the app at it:
+
+```bash
+npm run relay
+VITE_BPTF_WS_URL=ws://localhost:8787 npm run dev
+```
+
+The local DB grows continuously (the feed is a firehose); clear it from devtools →
+Application → IndexedDB → `bptf-listings` when needed.
